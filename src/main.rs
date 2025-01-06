@@ -2,29 +2,28 @@ use std::env;
 
 fn main() {
   let mut args: Vec<String> = env::args().collect();
-  //let invocation_name: String = args.remove(0);
-  args.remove(0);
 
-  if args.len() < 3 {
-    println!("Usage: calculator --shutdown(Optional) <a> <operator> <b>");
+  if args.len() > 3 {
+    println!("Usage: calculator --shutdown(Optional) 'expression'");
+    println!("Supports: +, -, *, /. coming soon: %, ==, //, **");
     return;
   }
 
   let shutdown: bool;
-  if &args[0] == "--shutdown" {
+  if &args[1] == "--shutdown" {
     shutdown = true;
-    args.remove(0);
   } else {
     shutdown = false;
   }
   
-  let result: i32 = calculate(args, shutdown);
+  let mut expression: Vec<&str> = args[2].split(' ').collect();
+  let result: i32 = calculate(expression, shutdown);
   println!("Answer: {result}");
 }
 
-fn calculate(expression: Vec<String>, shutdown: bool) -> i32 {
+fn calculate(mut expression: Vec<&str>, shutdown: bool) -> i32 {
   if expression.len() == 3 {
-    let operator: &String = &expression[1];
+    let operator: &str = expression[1];
     let a: i32 = expression[0].trim().parse().expect("a is cooked");
     let b: i32 = expression[2].trim().parse().expect("b is cooked");
 
