@@ -12,46 +12,46 @@ fn main() {
   }
 
   let shutdown: bool;
-  if args[1] == "--shutdown" {
+  if args.len() > 1 && args[1] == "--shutdown" {
     shutdown = true;
     args.remove(1);
   } else {
     shutdown = false;
   }
-  
-  let expression: Expression = string_to_expression(&args[1]);
 
+  if args.len() == 1 {
+    terminal_loop(shutdown);
+  }
+
+  let expression: Expression = string_to_expression(&args[1]);
   let result = expression.evaluate(shutdown);
   println!("Answer: {result}");
 }
 
 fn string_to_expression(string: &str) -> Expression {
   for (i, chr) in string.chars().enumerate() {
+    let a = &string[0..i];
+    let b = &string[1+i..];
     match chr {
-      '+' => {
-        let a = string_to_expression(&string[0..i]);
-        let b = string_to_expression(&string[1+i..]);
-        return Expression::Add(Box::new(a), Box::new(b));
-      }
-      '-' => {
-        let a = string_to_expression(&string[0..i]);
-        let b = string_to_expression(&string[1+i..]);
-        return Expression::Sub(Box::new(a), Box::new(b));
-      }
-      '*' => {
-        let a = string_to_expression(&string[0..i]);
-        let b = string_to_expression(&string[1+i..]);
-        return Expression::Mult(Box::new(a), Box::new(b));
-      }
-      '/' => {
-        let a = string_to_expression(&string[0..i]);
-        let b = string_to_expression(&string[1+i..]);
-        return Expression::Div(Box::new(a), Box::new(b));
-      }
+      '+' => return Expression::Add(Box::new(string_to_expression(a)), Box::new(string_to_expression(b))),
+      '-' => return Expression::Sub(Box::new(string_to_expression(a)), Box::new(string_to_expression(b))),
+      '*' => return Expression::Mult(Box::new(string_to_expression(a)), Box::new(string_to_expression(b))),
+      '/' => return Expression::Div(Box::new(string_to_expression(a)), Box::new(string_to_expression(b))),
       _ => continue,
-    }
+    };
   }
   Expression::Simple(string.parse().expect("bombaclaat"))
+}
+
+fn terminal_loop(shutdown: bool) {
+  println!("Calculator:");
+  loop {
+    let mut user_input = String::new();
+    std::io::stdin().read_line(&mut user_input).expect("negative aura");
+    let expression: Expression = string_to_expression(&user_input.trim());
+    let result = expression.evaluate(shutdown);
+    println!("Answer: {result}");
+  }
 }
 
 enum Expression {
@@ -71,7 +71,7 @@ impl Expression {
       Expression::Mult(left, right) => left.evaluate(shutdown) * right.evaluate(shutdown),
       Expression::Div(left, right) => {
         let b = right.evaluate(shutdown);
-        if b == 0.0 && shutdown { // shutdown not found in this scope :cry:
+        if b == 0.0 && shutdown {
           match system_shutdown::shutdown() {
             Ok(_) => println!("division by 0, shutting down"),
             Err(error) => eprintln!("Failed to shut down: {}", error),    
